@@ -1,0 +1,49 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: run-nvidia-smi-all-
+spec:
+  entrypoint: main
+  arguments:
+    parameters:
+    - name: gpu-label
+      value: nvidia.com/gpu.present=true
+  templates:
+  - name: main
+    steps:
+    - - name: gpu-nodes
+        template: get-gpu-node-list
+    - - name: nvidia-smi
+        template: run-nvidia-smi
+        arguments:
+          parameters:
+          - name: node-name
+            value: '{{item}}'
+        withParam: '{{steps.gpu-nodes.outputs.result}}'
+
+  - name: get-gpu-node-list
+    container:
+      image: alpine/k8s:1.27.1
+      command: [sh, -c]
+      args:
+      - |       
+        kubectl get node -l {{workflow.parameters.gpu-label}} -o=json \
+          | jq -r '.items[].metadata.name' \
+          | jq -R . \
+          | jq -s .
+
+  - name: run-nvidia-smi
+    inputs:
+      parameters:
+      - name: node-name
+    nodeName: '{{inputs.parameters.node-name}}'
+    container:
+      image: nvidia/cuda:12.1.1-runtime-ubuntu22.04
+      command: [sh, -c]
+      args:
+      - |
+        nvidia-smi
+        nvidia-smi -L
+    resources:
+      limits:
+        nvidia.com/gpu: "1"
