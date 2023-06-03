@@ -1,0 +1,14 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: kubectl-get-node-
+spec:
+  entrypoint: kubectl-get-node
+  templates:
+  - name: kubectl-get-node
+    container:
+      image: alpine/k8s:1.27.1
+      command: [sh, -c]
+      args:
+      - |
+        kubectl get node
