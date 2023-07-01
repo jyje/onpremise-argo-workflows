@@ -7,7 +7,7 @@ spec:
   arguments:
     parameters:
     - name: gpu-label
-      value: nvidia.com/gpu.present=true
+      value: nvidia.com/gpu.deploy.container-toolkit=true
   templates:
   - name: main
     steps:
@@ -36,7 +36,8 @@ spec:
     inputs:
       parameters:
       - name: node-name
-    nodeName: '{{inputs.parameters.node-name}}'
+    nodeSelector:
+      kubernetes.io/hostname: '{{inputs.parameters.node-name}}'
     container:
       image: nvidia/cuda:12.1.1-runtime-ubuntu22.04
       command: [sh, -c]
